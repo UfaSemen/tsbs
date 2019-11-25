@@ -33,8 +33,8 @@ func NewCore(start, end time.Time, scale int) (*Core, error) {
 	return &Core{Core: c}, err
 }
 
-func (c *Core) getRandomSensor() string {
-	return fmt.Sprintf("host_%d", rand.Intn(c.Scale))
+func (c *Core) GetRandomSensor() string {
+	return fmt.Sprintf("sensor_%d", rand.Intn(c.Scale))
 }
 
 // RawDataFiller is a type that can fill in a raw data query
