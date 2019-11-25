@@ -1,6 +1,8 @@
 package siemens
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/uses/common"
@@ -29,6 +31,10 @@ type Core struct {
 func NewCore(start, end time.Time, scale int) (*Core, error) {
 	c, err := common.NewCore(start, end, scale)
 	return &Core{Core: c}, err
+}
+
+func (c *Core) getRandomSensor() string {
+	return fmt.Sprintf("host_%d", rand.Intn(c.Scale))
 }
 
 // RawDataFiller is a type that can fill in a raw data query
