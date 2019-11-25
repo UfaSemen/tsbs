@@ -17,6 +17,7 @@ const (
 	FormatSiriDB      = "siridb"
 	FormatTimescaleDB = "timescaledb"
 	FormatCrateDB     = "cratedb"
+	FormatPeregreen     = "peregreen"
 )
 
 const (
@@ -34,6 +35,7 @@ var formats = []string{
 	FormatSiriDB,
 	FormatTimescaleDB,
 	FormatCrateDB,
+	FormatPeregreen,
 }
 
 func isIn(s string, arr []string) bool {
@@ -51,6 +53,7 @@ const (
 	useCaseCPUSingle = "cpu-single"
 	useCaseDevops    = "devops"
 	useCaseIoT       = "iot"
+	useCaseSiemens   = "siemens"
 )
 
 var useCaseChoices = []string{
@@ -58,6 +61,7 @@ var useCaseChoices = []string{
 	useCaseCPUSingle,
 	useCaseDevops,
 	useCaseIoT,
+	useCaseSiemens,
 }
 
 // ParseUTCTime parses a string-represented time of the format 2006-01-02T15:04:05Z07:00
