@@ -8,17 +8,17 @@ import (
 	"github.com/timescale/tsbs/query"
 )
 
-//MovingAverage produces a filler for queries in the siemens moving average case.
-type MovingAverage struct {
+//Difference produces a filler for queries in the siemens difference case.
+type Difference struct {
 	core       utils.QueryGenerator
 	interval   time.Duration
 	resolution time.Duration
 }
 
-//MovingAverage produces a new function that produces a new MovingAverage
-func NewMovingAverage(interval, resolution time.Duration) utils.QueryFillerMaker {
+//Difference produces a new function that produces a new Difference
+func NewDifference(interval, resolution time.Duration) utils.QueryFillerMaker {
 	return func(core utils.QueryGenerator) utils.QueryFiller {
-		return &MovingAverage{
+		return &Difference{
 			core:       core,
 			interval:   interval,
 			resolution: resolution,
@@ -27,11 +27,11 @@ func NewMovingAverage(interval, resolution time.Duration) utils.QueryFillerMaker
 }
 
 //Fill fills in the query.Query with query details
-func (d *MovingAverage) Fill(q query.Query) query.Query {
-	fc, ok := d.core.(MovingAverageFiller)
+func (d *Difference) Fill(q query.Query) query.Query {
+	fc, ok := d.core.(DifferenceFiller)
 	if !ok {
 		common.PanicUnimplementedQuery(d.core)
 	}
-	fc.MovingAverage(q, d.interval, d.resolution)
+	fc.Difference(q, d.interval, d.resolution)
 	return q
 }

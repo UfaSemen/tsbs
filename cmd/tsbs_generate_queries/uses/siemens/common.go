@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	LabelRawData       = "raw-data"
-	LabelSearch        = "search"
-	LabelSampledData   = "sampled-data"
-	LabelMaximum       = "maximum"
-	LabelMovingAverage = "moving-average"
-	LabelHour          = "-hour"
-	LabelDay           = "-day"
-	LabelWeek          = "-week"
-	LabelMonth         = "-month"
-	LabelYear          = "-year"
+	LabelRawData     = "raw-data"
+	LabelSearch      = "search"
+	LabelSampledData = "sampled-data"
+	LabelMaximum     = "maximum"
+	LabelDifference  = "difference"
+	LabelHour        = "-hour"
+	LabelDay         = "-day"
+	LabelWeek        = "-week"
+	LabelMonth       = "-month"
+	LabelYear        = "-year"
 )
 
 // Core is the common component of all generators for all systems
@@ -57,7 +57,7 @@ type MaximumFiller interface {
 	Maximum(query.Query, time.Duration, time.Duration)
 }
 
-// MovingAverageFiller is a type that can fill in a moving average query
-type MovingAverageFiller interface {
-	MovingAverage(query.Query, time.Duration, time.Duration)
+// DifferenceFiller is a type that can fill in a difference query
+type DifferenceFiller interface {
+	Difference(query.Query, time.Duration, time.Duration)
 }
