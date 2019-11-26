@@ -75,7 +75,9 @@ func (d *decoder) Decode(_ *bufio.Reader) *load.Point {
 		fatal("data file in invalid format; got %s expected %s", prefix, tagsPrefix)
 		return nil
 	}
-	data.tags = parts[1]
+	if len(parts) > 1 {
+		data.tags = parts[1]
+	}
 
 	// Scan again to get the data line
 	ok = d.scanner.Scan()

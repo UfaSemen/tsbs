@@ -42,7 +42,9 @@ func subsystemTagsToJSON(tags []string) map[string]interface{} {
 	json := map[string]interface{}{}
 	for _, t := range tags {
 		args := strings.Split(t, "=")
-		json[args[0]] = args[1]
+		if len(args) >= 2 {
+			json[args[0]] = args[1]
+		}
 	}
 	return json
 }
@@ -146,7 +148,12 @@ func splitTagsAndMetrics(rows []*insertData, dataCols int) ([][]string, [][]inte
 		ts := time.Unix(0, timeInt)
 
 		// use nil at 2nd position as placeholder for tagKey
-		r := make([]interface{}, 3, dataCols)
+		var r []interface{}
+		if dataCols < 3 {
+			r = make([]interface{}, 3, 3)
+		} else {
+			r = make([]interface{}, 3, dataCols)
+		}
 		r[0], r[1], r[2] = ts, nil, json
 		if inTableTag {
 			r = append(r, tags[0])
@@ -183,6 +190,9 @@ func (p *processor) processCSI(hypertable string, rows []*insertData) uint64 {
 	newTags := make([][]string, 0, len(rows))
 	p.csi.mutex.RLock()
 	for _, cols := range tagRows {
+		if len(cols) == 0 {
+			continue
+		}
 		if _, ok := p.csi.m[cols[0]]; !ok {
 			newTags = append(newTags, cols)
 		}
@@ -199,8 +209,10 @@ func (p *processor) processCSI(hypertable string, rows []*insertData) uint64 {
 
 	p.csi.mutex.RLock()
 	for i := range dataRows {
-		tagKey := tagRows[i][0]
-		dataRows[i][1] = p.csi.m[tagKey]
+		if len(tagRows) > i && len(tagRows[i]) >= 1 {
+			tagKey := tagRows[i][0]
+			dataRows[i][1] = p.csi.m[tagKey]
+		}
 	}
 	p.csi.mutex.RUnlock()
 
