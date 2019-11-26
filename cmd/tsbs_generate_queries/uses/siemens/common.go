@@ -59,5 +59,5 @@ type MaximumFiller interface {
 
 // DifferenceFiller is a type that can fill in a difference query
 type DifferenceFiller interface {
-	Difference(query.Query, time.Duration, time.Duration)
+	Difference(query.Query, time.Duration)
 }
