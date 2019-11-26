@@ -60,7 +60,7 @@ func (s *Siemens) Maximum(qi query.Query, d, gd time.Duration) {
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }
 
-func (s *Siemens) Diff(qi query.Query, d time.Duration) {
+func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
 
 	influxql := fmt.Sprintf(`SELECT difference("value") FROM "%s" WHERE time > '%s' AND time <= '%s'`,
