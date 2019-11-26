@@ -61,6 +61,7 @@ type BenchmarkRunnerConfig struct {
 	Workers         uint          `mapstructure:"workers"`
 	Limit           uint64        `mapstructure:"limit"`
 	DoLoad          bool          `mapstructure:"do-load"`
+	DoCreateAggr    bool          `mapstructure:"do-create-aggr"`
 	DoCreateDB      bool          `mapstructure:"do-create-db"`
 	DoAbortOnExist  bool          `mapstructure:"do-abort-on-exist"`
 	ReportingPeriod time.Duration `mapstructure:"reporting-period"`
@@ -80,6 +81,7 @@ func (c BenchmarkRunnerConfig) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.Duration("reporting-period", 10*time.Second, "Period to report write stats")
 	fs.String("file", "", "File name to read data from")
 	fs.Int64("seed", 0, "PRNG seed (default: 0, which uses the current timestamp)")
+	fs.Bool("do-create-aggr", false, "Whether to create aggregated table")
 }
 
 // BenchmarkRunner is responsible for initializing and storing common
@@ -291,6 +293,14 @@ func (l *BenchmarkRunner) work(b Benchmark, wg *sync.WaitGroup, c *duplexChannel
 		atomic.AddUint64(&l.rowCnt, rowCnt)
 		c.sendToScanner()
 		l.timeToSleep(workerNum, startedWorkAt)
+	}
+
+	if l.DoCreateAggr {
+		if procAg, ok := proc.(ProcessorAggregator); ok {
+			procAg.CreateAggregatedTable()
+		} else {
+			panic("Creation of aggregated table is not realized")
+		}
 	}
 
 	// Close proc if necessary

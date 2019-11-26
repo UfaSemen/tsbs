@@ -74,14 +74,9 @@ var useCaseMatrix = map[string]map[string]utils.QueryFillerMaker{
 		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelHour:      siemens.NewMaximum(365*24*time.Hour, time.Hour),
 		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelDay:       siemens.NewMaximum(365*24*time.Hour, 24*time.Hour),
 		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelWeek:      siemens.NewMaximum(365*24*time.Hour, 7*24*time.Hour),
-		siemens.LabelDifference + siemens.LabelDay + siemens.LabelHour:    siemens.NewDifference(24*time.Hour, time.Hour),
-		siemens.LabelDifference + siemens.LabelDay + siemens.LabelDay:     siemens.NewDifference(24*time.Hour, 24*time.Hour),
-		siemens.LabelDifference + siemens.LabelMonth + siemens.LabelHour:  siemens.NewDifference(30*24*time.Hour, time.Hour),
-		siemens.LabelDifference + siemens.LabelMonth + siemens.LabelDay:   siemens.NewDifference(30*24*time.Hour, 24*time.Hour),
-		siemens.LabelDifference + siemens.LabelMonth + siemens.LabelWeek:  siemens.NewDifference(30*24*time.Hour, 7*24*time.Hour),
-		siemens.LabelDifference + siemens.LabelYear + siemens.LabelHour:   siemens.NewDifference(365*24*time.Hour, time.Hour),
-		siemens.LabelDifference + siemens.LabelYear + siemens.LabelDay:    siemens.NewDifference(365*24*time.Hour, 24*time.Hour),
-		siemens.LabelDifference + siemens.LabelYear + siemens.LabelWeek:   siemens.NewDifference(365*24*time.Hour, 7*24*time.Hour),
+		siemens.LabelDifference + siemens.LabelDay:                        siemens.NewDifference(24 * time.Hour),
+		siemens.LabelDifference + siemens.LabelMonth:                      siemens.NewDifference(30 * 24 * time.Hour),
+		siemens.LabelDifference + siemens.LabelYear:                       siemens.NewDifference(365 * 24 * time.Hour),
 	},
 }
 

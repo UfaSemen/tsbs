@@ -20,6 +20,9 @@ const (
 	LabelWeek        = "-week"
 	LabelMonth       = "-month"
 	LabelYear        = "-year"
+
+	MaxSearchLimit = 300
+	MinSearchLimit = 100
 )
 
 // Core is the common component of all generators for all systems
@@ -35,6 +38,10 @@ func NewCore(start, end time.Time, scale int) (*Core, error) {
 
 func (c *Core) GetRandomSensor() string {
 	return fmt.Sprintf("sensor_%d", rand.Intn(c.Scale))
+}
+
+func (c *Core) GetRandomSearchTable() string {
+	return fmt.Sprintf("search_%d", rand.Intn(c.Scale))
 }
 
 // RawDataFiller is a type that can fill in a raw data query
@@ -59,5 +66,5 @@ type MaximumFiller interface {
 
 // DifferenceFiller is a type that can fill in a difference query
 type DifferenceFiller interface {
-	Difference(query.Query, time.Duration, time.Duration)
+	Difference(query.Query, time.Duration)
 }

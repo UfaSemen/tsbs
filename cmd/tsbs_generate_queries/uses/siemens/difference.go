@@ -10,18 +10,16 @@ import (
 
 //Difference produces a filler for queries in the siemens difference case.
 type Difference struct {
-	core       utils.QueryGenerator
-	interval   time.Duration
-	resolution time.Duration
+	core     utils.QueryGenerator
+	interval time.Duration
 }
 
 //Difference produces a new function that produces a new Difference
-func NewDifference(interval, resolution time.Duration) utils.QueryFillerMaker {
+func NewDifference(interval time.Duration) utils.QueryFillerMaker {
 	return func(core utils.QueryGenerator) utils.QueryFiller {
 		return &Difference{
-			core:       core,
-			interval:   interval,
-			resolution: resolution,
+			core:     core,
+			interval: interval,
 		}
 	}
 }
@@ -32,6 +30,6 @@ func (d *Difference) Fill(q query.Query) query.Query {
 	if !ok {
 		common.PanicUnimplementedQuery(d.core)
 	}
-	fc.Difference(q, d.interval, d.resolution)
+	fc.Difference(q, d.interval)
 	return q
 }
