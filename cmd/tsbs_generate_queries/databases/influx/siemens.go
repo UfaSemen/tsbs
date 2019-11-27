@@ -31,7 +31,7 @@ func (s *Siemens) RawData(qi query.Query, d time.Duration) {
 func (s *Siemens) SampledData(qi query.Query, d, gd time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
 
-	influxql := fmt.Sprintf(`SELECT last("value") FROM "%s" WHERE time > '%s' AND time <= '%s' GROUP BY time(%s)`,
+	influxql := fmt.Sprintf(`SELECT first("value") FROM "%s" WHERE time > '%s' AND time <= '%s' GROUP BY time(%s)`,
 		s.GetRandomSensor(),
 		interval.Start().Format(time.RFC3339),
 		interval.End().Format(time.RFC3339),
