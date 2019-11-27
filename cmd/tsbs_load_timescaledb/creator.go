@@ -164,11 +164,11 @@ func (d *dbCreator) getFieldAndIndexDefinitions(columns []string) ([]string, []s
 	var indexDefs []string
 	var allCols []string
 
-	partitioningField := tableCols[tagsKey][0]
 	tableName := columns[0]
 	// If the user has specified that we should partition on the primary tags key, we
 	// add that to the list of columns to create
 	if inTableTag {
+		partitioningField := tableCols[tagsKey][0]
 		allCols = append(allCols, partitioningField)
 	}
 
@@ -256,6 +256,11 @@ func createTagsTable(db *sql.DB, tagNames, tagTypes []string) {
 		MustExec(db, "CREATE TABLE tags(id SERIAL PRIMARY KEY, tagset JSONB)")
 		MustExec(db, "CREATE UNIQUE INDEX uniq1 ON tags(tagset)")
 		MustExec(db, "CREATE INDEX idxginp ON tags USING gin (tagset jsonb_path_ops);")
+		return
+	}
+
+	if len(tagNames) == 0 {
+		MustExec(db, "CREATE TABLE tags(id SERIAL PRIMARY KEY)")
 		return
 	}
 

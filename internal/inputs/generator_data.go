@@ -3,17 +3,17 @@ package inputs
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"math/rand"
-	"os"
-	"sort"
-	"time"
-
 	"github.com/spf13/pflag"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_data/common"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_data/devops"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_data/iot"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_data/serialize"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_data/siemens"
+	"io"
+	"math/rand"
+	"os"
+	"sort"
+	"time"
 )
 
 // Error messages when using a DataGenerator
@@ -40,6 +40,8 @@ type DataGeneratorConfig struct {
 	LogInterval          time.Duration `mapstructure:"log-interval"`
 	InterleavedGroupID   uint          `mapstructure:"interleaved-generation-group-id"`
 	InterleavedNumGroups uint          `mapstructure:"interleaved-generation-groups"`
+	InFilePath 			 string 	   `mapstructure:"infile"`
+	OutliersFreq 		 float64 	   `mapstructure:"outliers-freq"`
 }
 
 // Validate checks that the values of the DataGeneratorConfig are reasonable.
@@ -66,6 +68,8 @@ func (c *DataGeneratorConfig) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.Uint64("max-data-points", 0, "Limit the number of data points to generate, 0 = no limit")
 	fs.Uint64("initial-scale", 0, "Initial scaling variable specific to the use case (e.g., devices in 'devops'). 0 means to use -scale value")
 	fs.Duration("log-interval", defaultLogInterval, "Duration between data points")
+	fs.String("infile", "", "Input file (siemens simulator)")
+	fs.Float64("outliers-freq", 0, "Outliers frequency (siemens simulator)")
 
 	fs.Uint("interleaved-generation-group-id", 0,
 		"Group (0-indexed) to perform round-robin serialization within. Use this to scale up data generation to multiple processes.")
@@ -82,6 +86,7 @@ type DataGenerator struct {
 	// os.Stdout unless File is specified in the GeneratorConfig passed to
 	// Generate.
 	Out io.Writer
+	InFile *os.File
 
 	config  *DataGeneratorConfig
 	tsStart time.Time
@@ -152,6 +157,9 @@ func (g *DataGenerator) Generate(config GeneratorConfig) error {
 
 func (g *DataGenerator) runSimulator(sim common.Simulator, serializer serialize.PointSerializer, dgc *DataGeneratorConfig) error {
 	defer g.bufOut.Flush()
+	if g.InFile != nil{
+		defer g.InFile.Close()
+	}
 
 	currGroupID := uint(0)
 	point := serialize.NewPoint()
@@ -216,6 +224,18 @@ func (g *DataGenerator) getSimulatorConfig(dgc *DataGeneratorConfig) (common.Sim
 			HostCount:       dgc.Scale,
 			HostConstructor: devops.NewHostCPUSingle,
 		}
+	case useCaseSiemens:
+		g.InFile, err = os.Open(dgc.InFilePath)
+		if err != nil{
+			return nil, err
+		}
+		ret = &siemens.SimulatorConfig{
+			Start: g.tsStart,
+			End:   g.tsEnd,
+			InFile: g.InFile,
+			GeneratorScale: dgc.Scale,
+			OutliersFreq: dgc.OutliersFreq,
+		}
 	default:
 		err = fmt.Errorf("unknown use case: '%s'", dgc.Use)
 	}
@@ -243,6 +263,8 @@ func (g *DataGenerator) getSerializer(sim common.Simulator, format string) (seri
 	case FormatTimescaleDB:
 		g.writeHeader(sim)
 		ret = &serialize.TimescaleDBSerializer{}
+	case FormatPeregreen:
+		ret = &serialize.PeregreenSerializer{}
 	default:
 		err = fmt.Errorf(errUnknownFormatFmt, format)
 	}

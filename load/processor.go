@@ -8,6 +8,12 @@ type Processor interface {
 	ProcessBatch(b Batch, doLoad bool) (metricCount, rowCount uint64)
 }
 
+// ProcessorAggregator is a Processor that also needs to create aggregated table
+type ProcessorAggregator interface {
+	Processor
+	CreateAggregatedTable()
+}
+
 // ProcessorCloser is a Processor that also needs to close or cleanup afterwards
 type ProcessorCloser interface {
 	Processor

@@ -12,6 +12,7 @@ require (
 	github.com/gocql/gocql v0.0.0-20190810123941-df4b9cc33030
 	github.com/google/flatbuffers v1.11.0
 	github.com/google/go-cmp v0.3.1
+	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgconn v1.1.0
 	github.com/jackc/pgx/v4 v4.1.1
 	github.com/jmoiron/sqlx v1.2.0
@@ -25,8 +26,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/transceptor-technology/go-qpack v0.0.0-20190116123619-49a14b216a45
 	github.com/valyala/fasthttp v1.4.0
-	github.com/visheratin/tss v0.0.1
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
-	golang.org/x/tools v0.0.0-20191125011157-cc15fab314e3 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 )

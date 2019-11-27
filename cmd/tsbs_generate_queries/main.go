@@ -5,6 +5,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/uses/siemens"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -47,6 +50,33 @@ var useCaseMatrix = map[string]map[string]utils.QueryFillerMaker{
 		iot.LabelAvgLoad:                       iot.NewAvgLoad,
 		iot.LabelDailyActivity:                 iot.NewDailyTruckActivity,
 		iot.LabelBreakdownFrequency:            iot.NewTruckBreakdownFrequency,
+	},
+	"siemens": {
+		siemens.LabelRawData + siemens.LabelDay:                           siemens.NewRawData(24 * time.Hour),
+		siemens.LabelRawData + siemens.LabelMonth:                         siemens.NewRawData(30 * 24 * time.Hour),
+		siemens.LabelRawData + siemens.LabelYear:                          siemens.NewRawData(365 * 24 * time.Hour),
+		siemens.LabelSearch + siemens.LabelDay:                            siemens.NewSearch(24 * time.Hour),
+		siemens.LabelSearch + siemens.LabelMonth:                          siemens.NewSearch(30 * 24 * time.Hour),
+		siemens.LabelSearch + siemens.LabelYear:                           siemens.NewSearch(365 * 24 * time.Hour),
+		siemens.LabelSampledData + siemens.LabelDay + siemens.LabelHour:   siemens.NewSampledData(24*time.Hour, time.Hour),
+		siemens.LabelSampledData + siemens.LabelDay + siemens.LabelDay:    siemens.NewSampledData(24*time.Hour, 24*time.Hour),
+		siemens.LabelSampledData + siemens.LabelMonth + siemens.LabelHour: siemens.NewSampledData(30*24*time.Hour, time.Hour),
+		siemens.LabelSampledData + siemens.LabelMonth + siemens.LabelDay:  siemens.NewSampledData(30*24*time.Hour, 24*time.Hour),
+		siemens.LabelSampledData + siemens.LabelMonth + siemens.LabelWeek: siemens.NewSampledData(30*24*time.Hour, 7*24*time.Hour),
+		siemens.LabelSampledData + siemens.LabelYear + siemens.LabelHour:  siemens.NewSampledData(365*24*time.Hour, time.Hour),
+		siemens.LabelSampledData + siemens.LabelYear + siemens.LabelDay:   siemens.NewSampledData(365*24*time.Hour, 24*time.Hour),
+		siemens.LabelSampledData + siemens.LabelYear + siemens.LabelWeek:  siemens.NewSampledData(365*24*time.Hour, 7*24*time.Hour),
+		siemens.LabelMaximum + siemens.LabelDay + siemens.LabelHour:       siemens.NewMaximum(24*time.Hour, time.Hour),
+		siemens.LabelMaximum + siemens.LabelDay + siemens.LabelDay:        siemens.NewMaximum(24*time.Hour, 24*time.Hour),
+		siemens.LabelMaximum + siemens.LabelMonth + siemens.LabelHour:     siemens.NewMaximum(30*24*time.Hour, time.Hour),
+		siemens.LabelMaximum + siemens.LabelMonth + siemens.LabelDay:      siemens.NewMaximum(30*24*time.Hour, 24*time.Hour),
+		siemens.LabelMaximum + siemens.LabelMonth + siemens.LabelWeek:     siemens.NewMaximum(30*24*time.Hour, 7*24*time.Hour),
+		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelHour:      siemens.NewMaximum(365*24*time.Hour, time.Hour),
+		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelDay:       siemens.NewMaximum(365*24*time.Hour, 24*time.Hour),
+		siemens.LabelMaximum + siemens.LabelYear + siemens.LabelWeek:      siemens.NewMaximum(365*24*time.Hour, 7*24*time.Hour),
+		siemens.LabelDifference + siemens.LabelDay:                        siemens.NewDifference(24 * time.Hour),
+		siemens.LabelDifference + siemens.LabelMonth:                      siemens.NewDifference(30 * 24 * time.Hour),
+		siemens.LabelDifference + siemens.LabelYear:                       siemens.NewDifference(365 * 24 * time.Hour),
 	},
 }
 

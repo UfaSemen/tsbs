@@ -45,6 +45,11 @@ type IoTGeneratorMaker interface {
 	NewIoT(start, end time.Time, scale int) (utils.QueryGenerator, error)
 }
 
+// SiemensGeneratorMaker creates a quert generator for iot use case
+type SiemensGeneratorMaker interface {
+	NewSiemens(start, end time.Time, scale int) (utils.QueryGenerator, error)
+}
+
 // QueryGeneratorConfig is the GeneratorConfig that should be used with a
 // QueryGenerator. It includes all the fields from a BaseConfig, as well as
 // options that are specific to generating the queries to test against a
@@ -291,6 +296,13 @@ func (g *QueryGenerator) getUseCaseGenerator(c *QueryGeneratorConfig) (utils.Que
 		}
 
 		return devopsFactory.NewDevops(g.tsStart, g.tsEnd, scale)
+	case useCaseSiemens:
+		siemensFactory, ok := factory.(SiemensGeneratorMaker)
+		if !ok {
+			return nil, fmt.Errorf(errUseCaseNotImplementedFmt, c.Use, c.Format)
+		}
+
+		return siemensFactory.NewSiemens(g.tsStart, g.tsEnd, scale)
 	default:
 		return nil, fmt.Errorf(errUnknownUseCaseFmt, c.Use)
 	}
