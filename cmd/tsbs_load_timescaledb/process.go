@@ -333,3 +333,18 @@ func convertValsToBasedOnType(values []string, types []string, quotemark string,
 
 	return sqlVals
 }
+
+func (p *processor) CreateAggregatedTable() {
+	row := p.db.QueryRow(`select count(*) from information_schema.tables where table_name like 'sensor%';`)
+	var senNum int
+	err := row.Scan(&senNum)
+	if err != nil {
+		panic(err)
+	}
+	for i := 0; i < senNum; i++ {
+		_, err := p.db.Exec(fmt.Sprintf("SELECT time_bucket('1 hours', time) AS hour, min(value) AS min, max(value) AS max INTO search_%d FROM sensor_%d GROUP BY hour", i, i))
+		if err != nil {
+			panic(err)
+		}
+	}
+}
