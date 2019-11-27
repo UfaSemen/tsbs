@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	valueDev = .5
+	valueDev  = .5
 	sensorFmt = "sensor_%d"
 )
 
 var (
-	labelValue        = []byte("value")
+	labelValue = []byte("value")
 )
 
 type SiemensGenerator struct {
@@ -44,10 +44,10 @@ func (s *SiemensGenerator) initMeasurement(label []byte, start time.Time, inFile
 	s.simulatedMeasurements = []common.SimulatedMeasurement{
 		&SensorMeasurement{
 			//rnd: s.rnd,
-			Timestamp:     start,
+			Timestamp:    start,
 			outliersFreq: outliersFreq,
-			inFile: inFile,
-			Label: label,
+			inFile:       inFile,
+			Label:        label,
 		},
 	}
 }
@@ -61,28 +61,27 @@ func NewSiemensGenerator(i int, start time.Time, inFile *os.File, outliersFreq f
 
 type SensorMeasurement struct {
 	Timestamp time.Time
-	Label []byte
+	Label     []byte
 	//rnd *rand.Rand
 	outliersFreq float64
-	inFile *os.File
-	value float64
-	scanner *bufio.Scanner
-	inFileShift int
+	inFile       *os.File
+	value        float64
+	scanner      *bufio.Scanner
+	inFileShift  int
 }
 
-func (m *SensorMeasurement) getLine() string{
-	if m.scanner == nil || !m.scanner.Scan(){
+func (m *SensorMeasurement) getLine() string {
+	if m.scanner == nil || !m.scanner.Scan() {
 		m.inFile.Seek(0, 0)
 		m.scanner = bufio.NewScanner(m.inFile)
 	}
 	return m.scanner.Text()
 }
 
-func (m *SensorMeasurement) baseValue() float64{
+func (m *SensorMeasurement) baseValue() float64 {
 	parts := make([]string, 0)
-	for len(parts) < 3{
+	for len(parts) < 3 {
 		line := m.getLine()
-		fmt.Println(line)
 		parts = strings.Split(line, ";")
 	}
 	base, _ := strconv.ParseFloat(parts[2], 64)
@@ -97,16 +96,16 @@ func (m *SensorMeasurement) ToPoint(p *serialize.Point) {
 	p.AppendField(labelValue, m.getValue())
 }
 
-func (m *SensorMeasurement) Tick(d time.Duration){
+func (m *SensorMeasurement) Tick(d time.Duration) {
 	m.Timestamp = m.Timestamp.Add(d)
 	base := m.baseValue()
 	m.advance(base)
 }
 
-func (m *SensorMeasurement) advance(base float64){
+func (m *SensorMeasurement) advance(base float64) {
 	rv := rand.Float64()
 	m.value = base + rand.Float64()*valueDev - valueDev/2
-	if rv > 1.0 - m.outliersFreq {
+	if rv > 1.0-m.outliersFreq {
 		rv = rand.Float64()
 		if rv > 0.5 {
 			m.value += base * 10

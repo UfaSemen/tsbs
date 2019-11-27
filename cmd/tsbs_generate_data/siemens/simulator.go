@@ -42,7 +42,7 @@ func (sc *SimulatorConfig) NewSimulator(interval time.Duration, limit uint64) co
 	}
 }
 
-func (sc SimulatorConfig) GeneratorConstructor(i int, start time.Time) common.Generator{
+func (sc SimulatorConfig) GeneratorConstructor(i int, start time.Time) common.Generator {
 	return NewSiemensGenerator(i, start, sc.InFile, sc.OutliersFreq)
 }
 
@@ -51,7 +51,7 @@ func (sc SimulatorConfig) calculateEpochs(interval time.Duration) uint64 {
 }
 
 type Simulator struct {
-	source string
+	source       string
 	sensorPrefix string
 
 	timestampStart time.Time
@@ -65,7 +65,7 @@ type Simulator struct {
 	madePoints uint64
 
 	generatorIndex uint64
-	generators []common.Generator
+	generators     []common.Generator
 }
 
 // Fields returns the fields of an entry.
@@ -74,11 +74,13 @@ func (s *Simulator) Fields() map[string][][]byte {
 		panic("cannot get fields because no Generators added")
 	}
 
-	data := make(map[string][][]byte, len(s.generators))
-	for _, sm := range s.generators[0].Measurements() {
-		point := serialize.NewPoint()
-		sm.ToPoint(point)
-		data[string(point.MeasurementName())] = point.FieldKeys()
+	data := make(map[string][][]byte)
+	for _, g := range s.generators {
+		for _, sm := range g.Measurements() {
+			point := serialize.NewPoint()
+			sm.ToPoint(point)
+			data[string(point.MeasurementName())] = point.FieldKeys()
+		}
 	}
 
 	return data
@@ -161,5 +163,3 @@ func (s *Simulator) Next(p *serialize.Point) bool {
 	//return ret
 	return true
 }
-
-
