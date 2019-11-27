@@ -15,62 +15,66 @@ type Siemens struct {
 
 func (s *Siemens) RawData(qi query.Query, d time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
+	sensor := s.GetRandomSensor()
 
 	influxql := fmt.Sprintf(`SELECT "value" FROM "%s" WHERE time > '%s' AND time <= '%s'`,
-		s.GetRandomSensor(),
+		sensor,
 		interval.Start().Format(time.RFC3339),
 		interval.End().Format(time.RFC3339),
 	)
 
-	humanLabel := "Influx all value from sensor"
-	humanDesc := humanLabel
+	humanLabel := fmt.Sprintf("InfluxDB all values for random %s from sensor", d.String())
+	humanDesc := fmt.Sprintf("%s: %s", humanLabel, sensor)
 
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }
 
 func (s *Siemens) SampledData(qi query.Query, d, gd time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
+	sensor := s.GetRandomSensor()
 
 	influxql := fmt.Sprintf(`SELECT first("value") FROM "%s" WHERE time > '%s' AND time <= '%s' GROUP BY time(%s)`,
-		s.GetRandomSensor(),
+		sensor,
 		interval.Start().Format(time.RFC3339),
 		interval.End().Format(time.RFC3339),
 		gd.String(),
 	)
 
-	humanLabel := "Influx sample value"
-	humanDesc := humanLabel
+	humanLabel := fmt.Sprintf("InfluxDB sample for random %s over %s intervals", d.String(), gd.String())
+	humanDesc := fmt.Sprintf("%s from sensor: %s", humanLabel, sensor)
 
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }
 
 func (s *Siemens) Maximum(qi query.Query, d, gd time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
+	sensor := s.GetRandomSensor()
 
 	influxql := fmt.Sprintf(`SELECT max("value") FROM "%s" WHERE time > '%s' AND time <= '%s' GROUP BY time(%s)`,
-		s.GetRandomSensor(),
+		sensor,
 		interval.Start().Format(time.RFC3339),
 		interval.End().Format(time.RFC3339),
 		gd.String(),
 	)
 
-	humanLabel := "Influx maximum value"
-	humanDesc := humanLabel
+	humanLabel := fmt.Sprintf("InfluxDB maximum value for random %s over %s intervals", d.String(), gd.String())
+	humanDesc := fmt.Sprintf("%s from sensor: %s", humanLabel, sensor)
 
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }
 
 func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
+	sensor := s.GetRandomSensor()
 
 	influxql := fmt.Sprintf(`SELECT difference("value") FROM "%s" WHERE time > '%s' AND time <= '%s'`,
-		s.GetRandomSensor(),
+		sensor,
 		interval.Start().Format(time.RFC3339),
 		interval.End().Format(time.RFC3339),
 	)
 
-	humanLabel := "Influx difference between values"
-	humanDesc := humanLabel
+	humanLabel := fmt.Sprintf("Clickhouse difference between values for random %s", d.String())
+	humanDesc := fmt.Sprintf("%s from sensor: %s", humanLabel, sensor)
 
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }
