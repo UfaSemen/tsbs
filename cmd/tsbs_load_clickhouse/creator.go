@@ -174,6 +174,18 @@ func generateTagsTableQuery(tagNames, tagTypes []string) string {
 		panic("wrong number of tag names and tag types")
 	}
 
+	index := "id"
+
+	if len(tagNames) == 0 {
+		return fmt.Sprintf(
+			"CREATE TABLE tags(\n"+
+				"created_date Date     DEFAULT today(),\n"+
+				"created_at   DateTime DEFAULT now(),\n"+
+				"id           UInt32"+
+				") ENGINE = MergeTree(created_date, %s, 8192)",
+			index)
+	}
+
 	tagColumnDefinitions := make([]string, len(tagNames))
 	for i, tagName := range tagNames {
 		tagType := serializedTypeToClickHouseType(tagTypes[i])
@@ -182,15 +194,13 @@ func generateTagsTableQuery(tagNames, tagTypes []string) string {
 
 	cols := strings.Join(tagColumnDefinitions, ",\n")
 
-	index := "id"
-
 	return fmt.Sprintf(
 		"CREATE TABLE tags(\n"+
 			"created_date Date     DEFAULT today(),\n"+
 			"created_at   DateTime DEFAULT now(),\n"+
 			"id           UInt32,\n"+
 			"%s"+
-			") ENGINE = MergeTree(created_date, (%s), 8192)",
+			") ENGINE = MergeTree(created_date, %s, 8192)",
 		cols,
 		index)
 }
