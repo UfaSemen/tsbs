@@ -34,9 +34,16 @@ var globalSyncCSI = newSyncCSI()
 // c=d
 // into JSON STRING '{"a": "b", "c": "d"}'
 func subsystemTagsToJSON(tags []string) string {
+	if len(tags) == 0 {
+		return "{}"
+	}
 	json := "{"
 	for i, t := range tags {
 		args := strings.Split(t, "=")
+		if len(args) < 2 {
+			continue
+		}
+
 		if i > 0 {
 			json += ","
 		}
@@ -70,6 +77,9 @@ func insertTags(db *sqlx.DB, startID int, rows [][]string, returnResults bool) m
 	// Columns. Ex.:
 	// hostname,region,datacenter,rack,os,arch,team,service,service_version,service_environment
 	cols := tableCols["tags"]
+	if len(cols) == 0 {
+		return nil
+	}
 	// Add id column to prepared statement
 	sql := fmt.Sprintf(`
 		INSERT INTO tags(

@@ -93,7 +93,9 @@ func (d *decoder) Decode(_ *bufio.Reader) *load.Point {
 		fatal("data file in invalid format; got %s expected %s", prefix, tagsPrefix)
 		return nil
 	}
-	data.tags = parts[1]
+	if len(parts) >= 2 {
+		data.tags = parts[1]
+	}
 
 	// Scan again to get the data line
 	// cpu,1451606400000000000,58,2,24,61,22,63,6,44,80,38
