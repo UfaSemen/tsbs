@@ -73,8 +73,25 @@ func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 		interval.End().Format(time.RFC3339),
 	)
 
-	humanLabel := fmt.Sprintf("Clickhouse difference between values for random %s", d.String())
+	humanLabel := fmt.Sprintf("InfluxDB difference between values for random %s", d.String())
 	humanDesc := fmt.Sprintf("%s from sensor: %s", humanLabel, sensor)
+
+	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
+}
+
+func (s *Siemens) Search(qi query.Query, d time.Duration) {
+	interval := s.Interval.MustRandWindow(d)
+	sensor := s.GetRandomSearchTable()
+	influxql := fmt.Sprintf(`SELECT time,min_value FROM %s WHERE (min_value <= %d OR max_value >= %d) AND (time > '%s' AND time <= '%s')`,
+		sensor,
+		siemens.MinSearchLimit,
+		siemens.MaxSearchLimit,
+		interval.Start().Format(time.RFC3339),
+		interval.End().Format(time.RFC3339),
+	)
+
+	humanLabel := fmt.Sprintf("InfluxDB search, random %s search table, random %s time range", sensor, d)
+	humanDesc := fmt.Sprintf("%s: %s", humanLabel, interval.StartString())
 
 	s.fillInQuery(qi, humanLabel, humanDesc, influxql)
 }

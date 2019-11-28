@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/timescale/tsbs/load"
@@ -100,4 +103,51 @@ func (p *processor) processBackoffMessages(workerID int) {
 	}
 	printFn("[worker %d] backoffs took a total of %fsec of runtime\n", workerID, totalBackoffSecs)
 	p.backingOffDone <- struct{}{}
+}
+
+func (p *processor) CreateAggregatedTable() {
+	u, err := url.Parse(p.httpWriter.c.Host)
+	if err != nil {
+		fatal("Preaggregation error: %s\n", err.Error())
+	}
+	//DROP PREAGGREGATED DB
+	u.Path = "query"
+	v := url.Values{}
+	v.Set("q", fmt.Sprintf("DROP DATABASE %s_search", p.httpWriter.c.Database))
+	u.RawQuery = v.Encode()
+	resp, err := http.Post(u.String(), "text/plain", nil)
+	if err != nil {
+		fatal("Preaggregation error: %s\n", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	ioutil.ReadAll(resp.Body)
+
+	u.Path = "query"
+	v = url.Values{}
+	v.Set("q", fmt.Sprintf("CREATE DATABASE %s_search", p.httpWriter.c.Database))
+	u.RawQuery = v.Encode()
+	resp, err = http.Post(u.String(), "text/plain", nil)
+	if err != nil {
+		fatal("Preaggregation error: %s\n", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	ioutil.ReadAll(resp.Body)
+
+	v = url.Values{}
+	v.Set("db", p.httpWriter.c.Database)
+	v.Set("q", fmt.Sprintf("SELECT min(value) AS min_value, max(value) AS max_value INTO %s_search.autogen.:MEASUREMENT FROM /sensor_.*/ GROUP BY time(1h)", p.httpWriter.c.Database))
+	u.RawQuery = v.Encode()
+	resp, err = http.Post(u.String(), "text/plain", nil)
+	if err != nil {
+		fatal("Preaggregation error: %s\n", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		fatal("Preaggregation error: [%d]%s\n", resp.StatusCode, resp.Status)
+		return
+	}
 }
