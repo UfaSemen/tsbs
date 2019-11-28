@@ -81,7 +81,7 @@ func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 
 func (s *Siemens) Search(qi query.Query, d time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
-	sensor := s.GetRandomSearchTable()
+	sensor := s.GetRandomSensor()
 	influxql := fmt.Sprintf(`SELECT time,min_value FROM %s WHERE (min_value <= %d OR max_value >= %d) AND (time > '%s' AND time <= '%s')`,
 		sensor,
 		siemens.MinSearchLimit,

@@ -133,3 +133,19 @@ func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 	humanDesc := fmt.Sprintf("%s from sensor: %s", humanLabel, sensor)
 	s.fillInQuery(qi, humanLabel, humanDesc, devops.TableName, sql)
 }
+
+func (s *Siemens) Search(qi query.Query, d time.Duration) {
+	interval := s.Interval.MustRandWindow(d)
+	table := s.GetRandomSearchTable()
+	sql := fmt.Sprintf(`SELECT hour FROM %s WHERE (min <= %d OR max >= %d) AND (time >= '%s' AND time < '%s')`,
+		table,
+		siemens.MinSearchLimit,
+		siemens.MaxSearchLimit,
+		interval.Start().Format(clickhouseTimeStringFormat),
+		interval.End().Format(clickhouseTimeStringFormat),
+	)
+
+	humanLabel := fmt.Sprintf("Clickhouse search, random %s search table, random %s time range", table, d)
+	humanDesc := fmt.Sprintf("%s: %s", humanLabel, interval.StartString())
+	s.fillInQuery(qi, humanLabel, humanDesc, table, sql)
+}

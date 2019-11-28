@@ -418,3 +418,48 @@ func convertBasedOnType(serializedType, value string) interface{} {
 		panic(fmt.Sprintf("unrecognized type %s", serializedType))
 	}
 }
+
+func (p *processor) CreateAggregatedTable() {
+	var cnt int
+	r := p.db.QueryRow(`SELECT count(name) as cnt FROM system.tables WHERE database == 'benchmark' AND name LIKE 'sensor_%'`)
+	if err := r.Scan(&cnt); err != nil {
+		fatal("Preaggregation error: %s", err)
+		return
+	}
+	var sql string
+	sqlDropFormat := `DROP TABLE IF EXISTS search_%d`
+	sqlCreateFormat := `CREATE TABLE search_%d (
+    	created_date Date,
+    	hour DateTime,
+    	max_value Float64,
+    	min_value Float64
+	) ENGINE = MergeTree(created_date, (max_value, min_value), 8192)`
+
+	sqlInsertFormat := `INSERT INTO search_%[1]d SELECT toStartOfDay(created_at) as created_date, toStartOfHour(created_at) as hour, min(value) AS min_value, max(value) AS max_value FROM sensor_%[1]d GROUP BY created_date,hour;
+`
+	for c := 0; c < cnt; c++ {
+		//DROP TABLE IF EXISTS
+		sql = fmt.Sprintf(sqlDropFormat, c)
+		_, err := p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
+
+		//CREATE TABLE
+		sql = fmt.Sprintf(sqlCreateFormat, c)
+		_, err = p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
+
+		//FILL TABLE AS SELECT
+		sql = fmt.Sprintf(sqlInsertFormat, c)
+		_, err = p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
+	}
+}
