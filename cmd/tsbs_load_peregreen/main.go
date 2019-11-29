@@ -17,15 +17,19 @@ var loader *load.BenchmarkRunner
 // for comfy testing
 var fatal = log.Fatalf
 
+// Params for batch processing have to be initialized inside init()
+var (
+	host string
+	port string
+)
+
 // Parse args:
 func init() {
 	var config load.BenchmarkRunnerConfig
 	config.AddToFlagSet(pflag.CommandLine)
 
-	pflag.String("dbuser", "defUser", "Username to enter Peregreen")
-	pflag.String("dbpass", "defPath", "Password to enter Peregreen")
 	pflag.String("host", "localhost", "Hostname of Peregreen instance")
-	pflag.String("port", "5432", "Which port to connect to on the database host")
+	pflag.String("port", "47375", "Which port to connect to on the database host")
 
 	pflag.Parse()
 
@@ -38,6 +42,9 @@ func init() {
 	if err := viper.Unmarshal(&config); err != nil {
 		panic(fmt.Errorf("unable to decode config: %s", err))
 	}
+
+	host = viper.GetString("host")
+	port = viper.GetString("port")
 
 	loader = load.GetBenchmarkRunner(config)
 }

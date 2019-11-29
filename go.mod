@@ -1,6 +1,6 @@
 module github.com/timescale/tsbs
 
-go 1.12
+go 1.13
 
 require (
 	github.com/SiriDB/go-siridb-connector v0.0.0-20190110105621-86b34c44c921
@@ -24,8 +24,10 @@ require (
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
+	github.com/tinylib/msgp v1.1.0
 	github.com/transceptor-technology/go-qpack v0.0.0-20190116123619-49a14b216a45
 	github.com/valyala/fasthttp v1.4.0
+	github.com/visheratin/tss v0.0.1
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/appengine v1.6.1 // indirect
 )

@@ -19,7 +19,10 @@ type point struct {
 }
 
 func (f *factory) New() load.Batch {
-	return &batch{}
+	return &batch{
+		m:   map[string]data.Float64Elements{},
+		cnt: 0,
+	}
 }
 
 type batch struct {
@@ -27,14 +30,15 @@ type batch struct {
 	cnt int
 }
 
-func (b batch) Len() int {
+func (b *batch) Len() int {
 	return b.cnt
 }
 
-func (b batch) Append(item *load.Point) {
-	this := item.Data.(point)
+func (b *batch) Append(item *load.Point) {
+	this := item.Data.(*point)
 
-	b.m[this.sensor] = append(b.m[this.sensor], this.element)
+	s := this.sensor
+	b.m[s] = append(b.m[s], this.element)
 	b.cnt++
 }
 
@@ -52,8 +56,14 @@ func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 	}
 
 	triple := strings.SplitN(d.scanner.Text(), " ", 3)
-	thisTs, _ := strconv.ParseInt(triple[1], 64, 10)
-	thisVal, _ := strconv.ParseFloat(triple[2], 64)
+	thisTs, err := strconv.ParseInt(triple[2], 10, 64)
+	if err != nil {
+		fatal("failed parsing the timestamp: %s", thisTs)
+	}
+	thisVal, _ := strconv.ParseFloat(triple[1], 64)
+	if err != nil {
+		fatal("failed parsing the value: %s", thisVal)
+	}
 	el := &data.Float64Element{
 		Timestamp: thisTs,
 		Value:     thisVal,
