@@ -168,6 +168,19 @@ func (l *BenchmarkRunner) RunBenchmark(b Benchmark, workQueues uint) {
 
 	// Wait for all workers to finish
 	wg.Wait()
+	if l.DoCreateAggr {
+		proc := b.GetProcessor()
+		proc.Init(int(l.Workers), l.DoLoad)
+		if procAg, ok := proc.(ProcessorAggregator); ok {
+			procAg.CreateAggregatedTable()
+		} else {
+			panic("Creation of aggregated table is not realized")
+		}
+		switch c := proc.(type) {
+		case ProcessorCloser:
+			c.Close(l.DoLoad)
+		}
+	}
 	end := time.Now()
 
 	l.summary(end.Sub(start))
@@ -293,14 +306,6 @@ func (l *BenchmarkRunner) work(b Benchmark, wg *sync.WaitGroup, c *duplexChannel
 		atomic.AddUint64(&l.rowCnt, rowCnt)
 		c.sendToScanner()
 		l.timeToSleep(workerNum, startedWorkAt)
-	}
-
-	if l.DoCreateAggr {
-		if procAg, ok := proc.(ProcessorAggregator); ok {
-			procAg.CreateAggregatedTable()
-		} else {
-			panic("Creation of aggregated table is not realized")
-		}
 	}
 
 	// Close proc if necessary

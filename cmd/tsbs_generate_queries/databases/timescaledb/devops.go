@@ -24,7 +24,6 @@ const (
 	oneMinute = 60
 	oneHour   = oneMinute * 60
 
-	timeBucketFmt    = "time_bucket('%d seconds', time)"
 	nonTimeBucketFmt = "to_timestamp(((extract(epoch from time)::int)/%d)*%d)"
 )
 

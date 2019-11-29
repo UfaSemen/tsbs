@@ -143,19 +143,19 @@ func (s *Simulator) Next(p *serialize.Point) bool {
 		s.generatorIndex = 0
 	}
 
-	for i := 0; i < len(s.generators); i++ {
-		s.generators[i].TickAll(s.interval)
-	}
+	//for i := 0; i < len(s.generators); i++ {
+	s.generators[s.generatorIndex].TickAll(s.interval)
+	//}
 
-	generator := s.generators[s.generatorIndex]
+	//generator := s.generators[s.generatorIndex]
 
 	// Populate the Generator tags.
-	for _, tag := range generator.Tags() {
+	for _, tag := range s.generators[s.generatorIndex].Tags() {
 		p.AppendTag(tag.Key, tag.Value)
 	}
 
 	// Populate measurement-specific tags and fields:
-	generator.Measurements()[0].ToPoint(p)
+	s.generators[s.generatorIndex].Measurements()[0].ToPoint(p)
 
 	//ret := s.generatorIndex < s.epochGenerators
 	s.madePoints++

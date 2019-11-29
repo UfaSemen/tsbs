@@ -10,7 +10,10 @@ import (
 	"github.com/timescale/tsbs/query"
 )
 
-const goTimeFmt = "2006-01-02 15:04:05.999999 -0700"
+const (
+	goTimeFmt     = "2006-01-02 15:04:05.999999 -0700"
+	timeBucketFmt = "time_bucket('%d seconds', time)"
+)
 
 // BaseGenerator contains settings specific for TimescaleDB
 type BaseGenerator struct {

@@ -91,8 +91,8 @@ func (m *SensorMeasurement) baseValue() float64 {
 // ToPoint serializes ReadingsMeasurement to serialize.Point.
 func (m *SensorMeasurement) ToPoint(p *serialize.Point) {
 	p.SetMeasurementName(m.Label)
-	copy := m.Timestamp
-	p.SetTimestamp(&copy)
+	ts := m.Timestamp
+	p.SetTimestamp(&ts)
 	p.AppendField(labelValue, m.getValue())
 }
 

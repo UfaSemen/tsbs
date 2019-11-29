@@ -34,9 +34,16 @@ var globalSyncCSI = newSyncCSI()
 // c=d
 // into JSON STRING '{"a": "b", "c": "d"}'
 func subsystemTagsToJSON(tags []string) string {
+	if len(tags) == 0 {
+		return "{}"
+	}
 	json := "{"
 	for i, t := range tags {
 		args := strings.Split(t, "=")
+		if len(args) < 2 {
+			continue
+		}
+
 		if i > 0 {
 			json += ","
 		}
@@ -70,6 +77,9 @@ func insertTags(db *sqlx.DB, startID int, rows [][]string, returnResults bool) m
 	// Columns. Ex.:
 	// hostname,region,datacenter,rack,os,arch,team,service,service_version,service_environment
 	cols := tableCols["tags"]
+	if len(cols) == 0 {
+		return nil
+	}
 	// Add id column to prepared statement
 	sql := fmt.Sprintf(`
 		INSERT INTO tags(
@@ -406,5 +416,50 @@ func convertBasedOnType(serializedType, value string) interface{} {
 		return int32(i)
 	default:
 		panic(fmt.Sprintf("unrecognized type %s", serializedType))
+	}
+}
+
+func (p *processor) CreateAggregatedTable() {
+	var cnt int
+	r := p.db.QueryRow(`SELECT count(name) as cnt FROM system.tables WHERE database == 'benchmark' AND name LIKE 'sensor_%'`)
+	if err := r.Scan(&cnt); err != nil {
+		fatal("Preaggregation error: %s", err)
+		return
+	}
+	var sql string
+	sqlDropFormat := `DROP TABLE IF EXISTS search_%d`
+	sqlCreateFormat := `CREATE TABLE search_%d (
+    	created_date Date,
+    	hour DateTime,
+    	max_value Float64,
+    	min_value Float64
+	) ENGINE = MergeTree(created_date, (max_value, min_value), 8192)`
+
+	sqlInsertFormat := `INSERT INTO search_%[1]d SELECT toStartOfDay(created_at) as created_date, toStartOfHour(created_at) as hour, min(value) AS min_value, max(value) AS max_value FROM sensor_%[1]d GROUP BY created_date,hour;
+`
+	for c := 0; c < cnt; c++ {
+		//DROP TABLE IF EXISTS
+		sql = fmt.Sprintf(sqlDropFormat, c)
+		_, err := p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
+
+		//CREATE TABLE
+		sql = fmt.Sprintf(sqlCreateFormat, c)
+		_, err = p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
+
+		//FILL TABLE AS SELECT
+		sql = fmt.Sprintf(sqlInsertFormat, c)
+		_, err = p.db.Exec(sql)
+		if err != nil {
+			fatal("Preaggregation error: %s\n", err)
+			return
+		}
 	}
 }
