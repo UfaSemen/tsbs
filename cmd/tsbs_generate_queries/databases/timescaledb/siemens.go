@@ -19,7 +19,8 @@ func (s *Siemens) RawData(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
 	sql := fmt.Sprintf(`SELECT * FROM %s
-		WHERE time >= '%s' AND time < '%s'`,
+		WHERE time >= '%s' AND time < '%s'
+		ORDER BY time`,
 		sensor,
 		in.Start().Format(goTimeFmt),
 		in.End().Format(goTimeFmt),
@@ -34,8 +35,9 @@ func (s *Siemens) RawData(q query.Query, interval time.Duration) {
 func (s *Siemens) Search(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	st := s.GetRandomSearchTable()
-	sql := fmt.Sprintf(`SELECT time FROM %s
-		WHERE time >= '%s' AND time < '%s' AND (min <= %d OR max >= %d)`,
+	sql := fmt.Sprintf(`SELECT hour FROM %s
+		WHERE hour >= '%s' AND hour < '%s' AND (min <= %d OR max >= %d)
+		ORDER BY hour`,
 		st,
 		in.Start().Format(goTimeFmt),
 		in.End().Format(goTimeFmt),
@@ -52,13 +54,14 @@ func (s *Siemens) Search(q query.Query, interval time.Duration) {
 func (s *Siemens) SampledData(q query.Query, interval, resolution time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT DISTINCT ON (%s AS resolution) time, value FROM %s
+	sql := fmt.Sprintf(`SELECT first(time, time) AS sampled_time, first(value, time) AS sampled_value FROM %s
 		WHERE time >= '%s' AND time < '%s'
-		ORDER BY resolution, time`,
-		fmt.Sprintf(timeBucketFmt, resolution.Seconds()),
+		GROUP BY %s
+		ORDER BY sampled_time`,
 		sensor,
 		in.Start().Format(goTimeFmt),
 		in.End().Format(goTimeFmt),
+		fmt.Sprintf(timeBucketFmt, int(resolution.Seconds())),
 	)
 
 	humanLabel := fmt.Sprintf("TimescaleDB sampled data, random %s sensor, random %s time range", sensor, interval)
@@ -72,8 +75,9 @@ func (s *Siemens) Maximum(q query.Query, interval, resolution time.Duration) {
 	sensor := s.GetRandomSensor()
 	sql := fmt.Sprintf(`SELECT %s AS resolution, MAX(value) FROM %s
 		WHERE time >= '%s' AND time < '%s'
-		GROUP BY resolution`,
-		fmt.Sprintf(timeBucketFmt, resolution.Seconds()),
+		GROUP BY resolution
+		ORDER BY resolution`,
+		fmt.Sprintf(timeBucketFmt, int(resolution.Seconds())),
 		sensor,
 		in.Start().Format(goTimeFmt),
 		in.End().Format(goTimeFmt),
@@ -88,7 +92,7 @@ func (s *Siemens) Maximum(q query.Query, interval, resolution time.Duration) {
 func (s *Siemens) Difference(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT time, value - LAG(value) OVER() FROM %s
+	sql := fmt.Sprintf(`SELECT time, value - LAG(value) OVER() AS difference FROM %s
 		WHERE time >= '%s' AND time < '%s'`,
 		sensor,
 		in.Start().Format(goTimeFmt),
