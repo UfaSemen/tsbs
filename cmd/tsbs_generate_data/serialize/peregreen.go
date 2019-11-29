@@ -57,7 +57,7 @@ func (s *PeregreenSerializer) Serialize(p *Point, w io.Writer) (err error) {
 		return nil
 	}
 	buf = append(buf, ' ')
-	buf = fastFormatAppend(p.timestamp.UTC().UnixNano(), buf)
+	buf = fastFormatAppend(p.timestamp.UnixNano()/1e6, buf) // milliseconds
 	buf = append(buf, '\n')
 	_, err = w.Write(buf)
 
