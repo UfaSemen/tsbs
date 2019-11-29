@@ -137,7 +137,7 @@ func (s *Siemens) Difference(qi query.Query, d time.Duration) {
 func (s *Siemens) Search(qi query.Query, d time.Duration) {
 	interval := s.Interval.MustRandWindow(d)
 	table := s.GetRandomSearchTable()
-	sql := fmt.Sprintf(`SELECT hour FROM %s WHERE (min <= %d OR max >= %d) AND (time >= '%s' AND time < '%s')`,
+	sql := fmt.Sprintf(`SELECT hour FROM %s WHERE (min_value <= %d OR max_value >= %d) AND (hour >= '%s' AND hour < '%s')`,
 		table,
 		siemens.MinSearchLimit,
 		siemens.MaxSearchLimit,
@@ -145,7 +145,7 @@ func (s *Siemens) Search(qi query.Query, d time.Duration) {
 		interval.End().Format(clickhouseTimeStringFormat),
 	)
 
-	humanLabel := fmt.Sprintf("Clickhouse search, random %s search table, random %s time range", table, d)
-	humanDesc := fmt.Sprintf("%s: %s", humanLabel, interval.StartString())
+	humanLabel := fmt.Sprintf("Clickhouse search, random %s time range", d)
+	humanDesc := fmt.Sprintf("%s, random %s search table: %s, start interval: %s", humanLabel, table, interval.StartString())
 	s.fillInQuery(qi, humanLabel, humanDesc, table, sql)
 }
