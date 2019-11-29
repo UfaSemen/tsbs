@@ -16,6 +16,7 @@ import (
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/cratedb"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/influx"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/mongo"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/peregreen"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/siridb"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/timescaledb"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/utils"
@@ -251,6 +252,10 @@ func (g *QueryGenerator) initFactories() error {
 		return err
 	}
 
+	peregreen := &peregreen.BaseGenerator{}
+	if err := g.addFactory(FormatPeregreen, peregreen); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -258,7 +263,7 @@ func (g *QueryGenerator) addFactory(database string, factory interface{}) error 
 	validFactory := false
 
 	switch factory.(type) {
-	case DevopsGeneratorMaker, IoTGeneratorMaker:
+	case DevopsGeneratorMaker, IoTGeneratorMaker, SiemensGeneratorMaker:
 		validFactory = true
 	}
 

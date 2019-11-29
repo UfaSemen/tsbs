@@ -1,4 +1,4 @@
-package timescaledb
+package peregreen
 
 import (
 	"fmt"
@@ -18,88 +18,79 @@ type Siemens struct {
 func (s *Siemens) RawData(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT * FROM %s
-		WHERE time >= '%s' AND time < '%s'
-		ORDER BY time`,
+	path := fmt.Sprintf(`/extract/%s/%d-%d/0/none/msgp`,
 		sensor,
-		in.Start().Format(goTimeFmt),
-		in.End().Format(goTimeFmt),
+		in.Start().Unix()*1000,
+		in.End().Unix()*1000,
 	)
 
-	humanLabel := fmt.Sprintf("TimescaleDB raw data, random %s sensor, random %s time range", sensor, interval)
+	humanLabel := fmt.Sprintf("Peregreen raw data, random %s sensor, random %s time range", sensor, interval)
 	humanDesc := fmt.Sprintf("%s: %s", humanLabel, in.StartString())
-	s.fillInQuery(q, humanLabel, humanDesc, sensor, sql)
+	s.fillInQuery(q, humanLabel, humanDesc, "GET", "", path)
 }
 
 //Search queries all hour long periods which have some outlier values for random time period of given size of random sensor
 func (s *Siemens) Search(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
-	st := s.GetRandomSearchTable()
-	sql := fmt.Sprintf(`SELECT hour FROM %s
-		WHERE hour >= '%s' AND hour < '%s' AND (min <= %d OR max >= %d)
-		ORDER BY hour`,
-		st,
-		in.Start().Format(goTimeFmt),
-		in.End().Format(goTimeFmt),
+	sensor := s.GetRandomSensor()
+	path := fmt.Sprintf(`/search/%s/%d-%d/msgp`,
+		sensor,
+		in.Start().Unix()*1000,
+		in.End().Unix()*1000,
+	)
+	body := fmt.Sprintf(`min lt %d | max gt %d`,
 		siemens.MinSearchLimit,
 		siemens.MaxSearchLimit,
 	)
 
-	humanLabel := fmt.Sprintf("TimescaleDB search, random %s search table, random %s time range", st, interval)
+	humanLabel := fmt.Sprintf("Peregreen search, random %s table, random %s time range", sensor, interval)
 	humanDesc := fmt.Sprintf("%s: %s", humanLabel, in.StartString())
-	s.fillInQuery(q, humanLabel, humanDesc, st, sql)
+	s.fillInQuery(q, humanLabel, humanDesc, "POST", body, path)
 }
 
 //SampledData queries data sampled with given resolution for random time period of given size of random sensor
 func (s *Siemens) SampledData(q query.Query, interval, resolution time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT first(time, time) AS sampled_time, first(value, time) AS sampled_value FROM %s
-		WHERE time >= '%s' AND time < '%s'
-		GROUP BY %s
-		ORDER BY sampled_time`,
+	path := fmt.Sprintf(`/extract/%s/%d-%d/%s/none/msgp`,
 		sensor,
-		in.Start().Format(goTimeFmt),
-		in.End().Format(goTimeFmt),
-		fmt.Sprintf(timeBucketFmt, int(resolution.Seconds())),
+		in.Start().Unix()*1000,
+		in.End().Unix()*1000,
+		resolution.String(),
 	)
 
-	humanLabel := fmt.Sprintf("TimescaleDB sampled data, random %s sensor, random %s time range", sensor, interval)
+	humanLabel := fmt.Sprintf("Peregreen sampled data, random %s sensor, random %s time range", sensor, interval)
 	humanDesc := fmt.Sprintf("%s: %s", humanLabel, in.StartString())
-	s.fillInQuery(q, humanLabel, humanDesc, sensor, sql)
+	s.fillInQuery(q, humanLabel, humanDesc, "GET", "", path)
 }
 
 //Maximum queries maximum values of data with given resolution for random time period of given size of random sensor
 func (s *Siemens) Maximum(q query.Query, interval, resolution time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT %s AS resolution, MAX(value) FROM %s
-		WHERE time >= '%s' AND time < '%s'
-		GROUP BY resolution
-		ORDER BY resolution`,
-		fmt.Sprintf(timeBucketFmt, int(resolution.Seconds())),
+	path := fmt.Sprintf(`/extract/%s/%d-%d/%s/max/msgp`,
 		sensor,
-		in.Start().Format(goTimeFmt),
-		in.End().Format(goTimeFmt),
+		in.Start().Unix()*1000,
+		in.End().Unix()*1000,
+		resolution.String(),
 	)
 
-	humanLabel := fmt.Sprintf("TimescaleDB maximum, random %s sensor, random %s time range", sensor, interval)
+	humanLabel := fmt.Sprintf("Peregreen maximum, random %s sensor, random %s time range", sensor, interval)
 	humanDesc := fmt.Sprintf("%s: %s", humanLabel, in.StartString())
-	s.fillInQuery(q, humanLabel, humanDesc, sensor, sql)
+	s.fillInQuery(q, humanLabel, humanDesc, "GET", "", path)
 }
 
 //Difference queries differences with last value for each row for random time period of given size of random sensor
 func (s *Siemens) Difference(q query.Query, interval time.Duration) {
 	in := s.Interval.MustRandWindow(interval)
 	sensor := s.GetRandomSensor()
-	sql := fmt.Sprintf(`SELECT time, value - LAG(value) OVER() AS difference FROM %s
-		WHERE time >= '%s' AND time < '%s'`,
+	path := fmt.Sprintf(`/extract/%s/%d-%d/0/transform:diff/msgp`,
 		sensor,
-		in.Start().Format(goTimeFmt),
-		in.End().Format(goTimeFmt),
+		in.Start().Unix()*1000,
+		in.End().Unix()*1000,
 	)
 
-	humanLabel := fmt.Sprintf("TimescaleDB difference, random %s sensor, random %s time range", sensor, interval)
+	humanLabel := fmt.Sprintf("Peregreen difference, random %s sensor, random %s time range", sensor, interval)
 	humanDesc := fmt.Sprintf("%s: %s", humanLabel, in.StartString())
-	s.fillInQuery(q, humanLabel, humanDesc, sensor, sql)
+	s.fillInQuery(q, humanLabel, humanDesc, "GET", "", path)
 }
