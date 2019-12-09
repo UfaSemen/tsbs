@@ -4,12 +4,25 @@ package main
 
 import (
 	"bufio"
+	"hash/fnv"
 	"strconv"
 	"strings"
 
 	"github.com/timescale/tsbs/load"
 	"github.com/visheratin/tss/data"
 )
+
+// sensorIndexer is used to consistently send the same sensor to the same worker
+type sensorIndexer struct {
+	partitions uint
+}
+
+func (i *sensorIndexer) GetIndex(item *load.Point) int {
+	p := item.Data.(*point)
+	h := fnv.New32a()
+	h.Write([]byte(p.sensor))
+	return int(h.Sum32()) % int(i.partitions)
+}
 
 type factory struct{}
 

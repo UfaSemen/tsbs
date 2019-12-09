@@ -61,8 +61,8 @@ func (b *benchmark) GetBatchFactory() load.BatchFactory {
 	return &factory{}
 }
 
-func (b *benchmark) GetPointIndexer(maxPartition uint) load.PointIndexer {
-	return &load.ConstantIndexer{}
+func (b *benchmark) GetPointIndexer(maxPartitions uint) load.PointIndexer {
+	return &sensorIndexer{partitions: maxPartitions}
 }
 
 func (b *benchmark) GetProcessor() load.Processor {
@@ -74,5 +74,5 @@ func (b *benchmark) GetDBCreator() load.DBCreator {
 }
 
 func main() {
-	loader.RunBenchmark(&benchmark{}, load.SingleQueue)
+	loader.RunBenchmark(&benchmark{}, load.WorkerPerQueue)
 }
