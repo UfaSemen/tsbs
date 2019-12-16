@@ -55,9 +55,13 @@ var useCaseMatrix = map[string]map[string]utils.QueryFillerMaker{
 		siemens.LabelRawData + siemens.LabelDay:                           siemens.NewRawData(24 * time.Hour),
 		siemens.LabelRawData + siemens.LabelMonth:                         siemens.NewRawData(30 * 24 * time.Hour),
 		siemens.LabelRawData + siemens.LabelYear:                          siemens.NewRawData(365 * 24 * time.Hour),
+		siemens.LabelRawData + siemens.LabelHour:                          siemens.NewRawData(time.Hour),
+		siemens.LabelRawData + siemens.LabelWeek:                          siemens.NewRawData(7 * time.Hour),
 		siemens.LabelSearch + siemens.LabelDay:                            siemens.NewSearch(24 * time.Hour),
 		siemens.LabelSearch + siemens.LabelMonth:                          siemens.NewSearch(30 * 24 * time.Hour),
 		siemens.LabelSearch + siemens.LabelYear:                           siemens.NewSearch(365 * 24 * time.Hour),
+		siemens.LabelSearch + siemens.LabelHour:                           siemens.NewSearch(365 * 24 * time.Hour),
+		siemens.LabelSearch + siemens.LabelWeek:                           siemens.NewSearch(365 * 24 * time.Hour),
 		siemens.LabelSampledData + siemens.LabelDay + siemens.LabelHour:   siemens.NewSampledData(24*time.Hour, time.Hour),
 		siemens.LabelSampledData + siemens.LabelDay + siemens.LabelDay:    siemens.NewSampledData(24*time.Hour, 24*time.Hour),
 		siemens.LabelSampledData + siemens.LabelMonth + siemens.LabelHour: siemens.NewSampledData(30*24*time.Hour, time.Hour),
@@ -77,6 +81,8 @@ var useCaseMatrix = map[string]map[string]utils.QueryFillerMaker{
 		siemens.LabelDifference + siemens.LabelDay:                        siemens.NewDifference(24 * time.Hour),
 		siemens.LabelDifference + siemens.LabelMonth:                      siemens.NewDifference(30 * 24 * time.Hour),
 		siemens.LabelDifference + siemens.LabelYear:                       siemens.NewDifference(365 * 24 * time.Hour),
+		siemens.LabelDifference + siemens.LabelHour:                       siemens.NewDifference(time.Hour),
+		siemens.LabelDifference + siemens.LabelWeek:                       siemens.NewDifference(7 * time.Hour),
 	},
 }
 

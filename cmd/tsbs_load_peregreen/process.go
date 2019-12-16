@@ -34,7 +34,7 @@ func (p *processor) ProcessBatch(b load.Batch, _ bool) (uint64, uint64) {
 		if err != nil {
 			fatal(err.Error())
 		}
-		log.Printf("resp status: %s sensor: %s\n", resp.Status, sensor)
+		//log.Printf("resp status: %s sensor: %s\n", resp.Status, sensor)
 		if resp.StatusCode != 200 {
 			log.Println(resp.Status)
 		}
