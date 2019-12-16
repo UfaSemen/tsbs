@@ -4,7 +4,6 @@ package main
 
 import (
 	"bufio"
-	"hash/fnv"
 	"strconv"
 	"strings"
 
@@ -19,9 +18,8 @@ type sensorIndexer struct {
 
 func (i *sensorIndexer) GetIndex(item *load.Point) int {
 	p := item.Data.(*point)
-	h := fnv.New32a()
-	h.Write([]byte(p.sensor))
-	return int(h.Sum32()) % int(i.partitions)
+	// sensor name starts from 8th symbol. improved hash func to avoid collisions
+	return int(p.sensor[7]) % int(i.partitions)
 }
 
 type factory struct{}
@@ -33,14 +31,15 @@ type point struct {
 
 func (f *factory) New() load.Batch {
 	return &batch{
-		m:   map[string]data.Float64Elements{},
+		m:   data.Float64Elements{},
 		cnt: 0,
 	}
 }
 
 type batch struct {
-	m   map[string]data.Float64Elements
-	cnt int
+	m      data.Float64Elements
+	cnt    int
+	sensor string
 }
 
 func (b *batch) Len() int {
@@ -49,9 +48,8 @@ func (b *batch) Len() int {
 
 func (b *batch) Append(item *load.Point) {
 	this := item.Data.(*point)
-
-	s := this.sensor
-	b.m[s] = append(b.m[s], this.element)
+	b.m = append(b.m, this.element)
+	b.sensor = this.sensor
 	b.cnt++
 }
 
