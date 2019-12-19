@@ -55,19 +55,55 @@ func (b *batch) Append(item *load.Point) {
 }
 
 type decoder struct {
-	scanner *bufio.Scanner
+	scanner    *bufio.Scanner
+	senNum     int
+	batchSize  int
+	sensor     int
+	numInBatch int
+	n          int
+	end        int
+	readStrs   []string
 }
 
 func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
-	ok := d.scanner.Scan()
-	if !ok && d.scanner.Err() == nil {
-		return nil // EOF
-	} else if !ok {
-		fatal("scan error: %v", d.scanner.Err())
-		return nil
+	var p point
+	if d.sensor == 0 {
+		for i := 0; i < senNum; i++ {
+			ok := d.scanner.Scan()
+			if !ok && d.scanner.Err() == nil {
+				if d.numInBatch == 0 {
+					return nil
+				}
+				d.end = d.numInBatch
+				d.sensor = (d.sensor + 1) % d.senNum
+				d.numInBatch = 0
+				d.n = 0
+				break
+			} else if !ok {
+				fatal("scan error: %v", d.scanner.Err())
+				return nil
+			}
+			d.readStrs[d.n] = d.scanner.Text()
+			d.n++
+		}
 	}
+	p = d.parsePoint(d.readStrs[d.numInBatch*d.senNum+d.sensor])
+	d.numInBatch++
+	if d.numInBatch == d.batchSize || d.numInBatch == d.end {
+		d.sensor = (d.sensor + 1) % d.senNum
+		d.numInBatch = 0
+		if d.sensor == 0 {
+			d.n = 0
+		}
+	}
+	return load.NewPoint(&p)
+}
 
-	triple := strings.SplitN(d.scanner.Text(), " ", 3)
+func (d *decoder) parsePoint(s string) point {
+	triple := strings.SplitN(s, " ", 3)
+	if len(triple) < 3 {
+		fatal("failed parsing input string: %s", triple)
+	}
 	thisTs, err := strconv.ParseInt(triple[2], 10, 64)
 	if err != nil {
 		fatal("failed parsing the timestamp: %s", thisTs)
@@ -80,8 +116,8 @@ func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 		Timestamp: thisTs,
 		Value:     thisVal,
 	}
-	return load.NewPoint(&point{
+	return point{
 		sensor:  triple[0],
 		element: *el,
-	})
+	}
 }

@@ -19,8 +19,10 @@ var fatal = log.Fatalf
 
 // Params for batch processing have to be initialized inside init()
 var (
-	host string
-	port string
+	host      string
+	port      string
+	senNum    int
+	batchSize int
 )
 
 // Parse args:
@@ -30,6 +32,7 @@ func init() {
 
 	pflag.String("host", "localhost", "Hostname of Peregreen instance")
 	pflag.String("port", "47375", "Which port to connect to on the database host")
+	pflag.Uint("sensors", 100, "Number of sensors in dataset")
 
 	pflag.Parse()
 
@@ -45,6 +48,8 @@ func init() {
 
 	host = viper.GetString("host")
 	port = viper.GetString("port")
+	senNum = viper.GetInt("sensors")
+	batchSize = viper.GetInt("batch-size")
 
 	loader = load.GetBenchmarkRunner(config)
 }
@@ -53,7 +58,10 @@ type benchmark struct{}
 
 func (b *benchmark) GetPointDecoder(br *bufio.Reader) load.PointDecoder {
 	return &decoder{
-		scanner: bufio.NewScanner(br),
+		scanner:   bufio.NewScanner(br),
+		senNum:    senNum,
+		batchSize: batchSize,
+		readStrs:  make([]string, batchSize*senNum),
 	}
 }
 
