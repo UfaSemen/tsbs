@@ -19,7 +19,8 @@ type sensorIndexer struct {
 func (i *sensorIndexer) GetIndex(item *load.Point) int {
 	p := item.Data.(*point)
 	// sensor name starts from 8th symbol. improved hash func to avoid collisions
-	return int(p.sensor[7]) % int(i.partitions)
+	s, _ := strconv.Atoi(p.sensor[7:])
+	return s % int(i.partitions)
 }
 
 type factory struct{}
@@ -31,15 +32,14 @@ type point struct {
 
 func (f *factory) New() load.Batch {
 	return &batch{
-		m:   data.Float64Elements{},
+		m:   map[string]data.Float64Elements{},
 		cnt: 0,
 	}
 }
 
 type batch struct {
-	m      data.Float64Elements
-	cnt    int
-	sensor string
+	m   map[string]data.Float64Elements
+	cnt int
 }
 
 func (b *batch) Len() int {
@@ -48,8 +48,9 @@ func (b *batch) Len() int {
 
 func (b *batch) Append(item *load.Point) {
 	this := item.Data.(*point)
-	b.m = append(b.m, this.element)
-	b.sensor = this.sensor
+
+	s := this.sensor
+	b.m[s] = append(b.m[s], this.element)
 	b.cnt++
 }
 
