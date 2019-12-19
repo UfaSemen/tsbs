@@ -19,7 +19,8 @@ type sensorIndexer struct {
 func (i *sensorIndexer) GetIndex(item *load.Point) int {
 	p := item.Data.(*point)
 	// sensor name starts from 8th symbol. improved hash func to avoid collisions
-	return int(p.sensor[7]) % int(i.partitions)
+	s, _ := strconv.Atoi(p.sensor[7:])
+	return s % int(i.partitions)
 }
 
 type factory struct{}
