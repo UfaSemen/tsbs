@@ -314,6 +314,9 @@ func (p *processor) processCSI(tableName string, rows []*insertData) uint64 {
 
 	tx := p.db.MustBegin()
 	stmt, err := tx.Prepare(sql)
+	if err != nil {
+		panic(err)
+	}
 	for _, r := range dataRows {
 		_, err := stmt.Exec(r...)
 		if err != nil {

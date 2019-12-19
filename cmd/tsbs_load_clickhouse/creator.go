@@ -99,7 +99,15 @@ func (d *dbCreator) RemoveOldDB(dbName string) error {
 	db := sqlx.MustConnect(dbType, getConnectString(false))
 	defer db.Close()
 
-	sql := fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName)
+	var sql string
+	if clusterName == "" {
+		sql = fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName)
+	} else {
+		sql = fmt.Sprintf("DROP DATABASE IF EXISTS %s ON CLUSTER %s", dbName, clusterName)
+	}
+	if debug > 0 {
+		fmt.Println(sql)
+	}
 	if _, err := db.Exec(sql); err != nil {
 		panic(err)
 	}
@@ -110,7 +118,15 @@ func (d *dbCreator) RemoveOldDB(dbName string) error {
 func (d *dbCreator) CreateDB(dbName string) error {
 	// Connect to ClickHouse in general and CREATE DATABASE
 	db := sqlx.MustConnect(dbType, getConnectString(false))
-	sql := fmt.Sprintf("CREATE DATABASE %s", dbName)
+	var sql string
+	if clusterName == "" {
+		sql = fmt.Sprintf("CREATE DATABASE %s", dbName)
+	} else {
+		sql = fmt.Sprintf("CREATE DATABASE %s ON CLUSTER %s", dbName, clusterName)
+	}
+	if debug > 0 {
+		fmt.Println(sql)
+	}
 	_, err := db.Exec(sql)
 	if err != nil {
 		panic(err)
@@ -158,9 +174,21 @@ func (d *dbCreator) CreateDB(dbName string) error {
 func createTagsTable(db *sqlx.DB, tagNames, tagTypes []string) {
 	sql := generateTagsTableQuery(tagNames, tagTypes)
 	if debug > 0 {
-		fmt.Printf(sql)
+		fmt.Println(sql)
 	}
 	_, err := db.Exec(sql)
+	if err != nil {
+		panic(err)
+	}
+	if clusterName != "" {
+		sql = fmt.Sprintf(
+			"CREATE TABLE tags as tags_mergeTree ENGINE = Distributed(%s, %s, tags_mergeTree, rand());",
+			clusterName, loader.DatabaseName())
+	}
+	if debug > 0 {
+		fmt.Println(sql)
+	}
+	_, err = db.Exec(sql)
 	if err != nil {
 		panic(err)
 	}
@@ -177,12 +205,22 @@ func generateTagsTableQuery(tagNames, tagTypes []string) string {
 	index := "id"
 
 	if len(tagNames) == 0 {
+		if clusterName == "" {
+			return fmt.Sprintf(
+				"CREATE TABLE tags(\n"+
+					"created_date Date     DEFAULT today(),\n"+
+					"created_at   DateTime DEFAULT now(),\n"+
+					"id           UInt32"+
+					") ENGINE = MergeTree(created_date, %s, 8192);",
+				index)
+		}
 		return fmt.Sprintf(
-			"CREATE TABLE tags(\n"+
+			"CREATE TABLE tags_mergeTree ON CLUSTER %s(\n"+
 				"created_date Date     DEFAULT today(),\n"+
 				"created_at   DateTime DEFAULT now(),\n"+
 				"id           UInt32"+
 				") ENGINE = MergeTree(created_date, %s, 8192)",
+			clusterName,
 			index)
 	}
 
@@ -194,15 +232,28 @@ func generateTagsTableQuery(tagNames, tagTypes []string) string {
 
 	cols := strings.Join(tagColumnDefinitions, ",\n")
 
-	return fmt.Sprintf(
-		"CREATE TABLE tags(\n"+
-			"created_date Date     DEFAULT today(),\n"+
-			"created_at   DateTime DEFAULT now(),\n"+
-			"id           UInt32,\n"+
-			"%s"+
-			") ENGINE = MergeTree(created_date, %s, 8192)",
-		cols,
-		index)
+	if clusterName == "" {
+		return fmt.Sprintf(
+			"CREATE TABLE tags(\n"+
+				"created_date Date     DEFAULT today(),\n"+
+				"created_at   DateTime DEFAULT now(),\n"+
+				"id           UInt32,\n"+
+				"%s"+
+				") ENGINE = MergeTree(created_date, %s, 8192)",
+			cols,
+			index)
+	} else {
+		return fmt.Sprintf(
+			"CREATE TABLE tags_mergeTree ON CLUSTER %s(\n"+
+				"created_date Date     DEFAULT today(),\n"+
+				"created_at   DateTime DEFAULT now(),\n"+
+				"id           UInt32,\n"+
+				"%s"+
+				") ENGINE = MergeTree(created_date, %s, 8192);",
+			clusterName,
+			cols,
+			index)
+	}
 }
 
 // createMetricsTable builds CREATE TABLE SQL statement and runs it
@@ -238,7 +289,22 @@ func createMetricsTable(db *sqlx.DB, tableSpec []string) {
 		columnsWithType = append(columnsWithType, fmt.Sprintf("%s Nullable(Float64)", column))
 	}
 
-	sql := fmt.Sprintf(`
+	//sql := fmt.Sprintf(`
+	//		CREATE TABLE %s (
+	//			created_date    Date     DEFAULT today(),
+	//			created_at      DateTime DEFAULT now(),
+	//			time            String,
+	//			tags_id         UInt32,
+	//			%s,
+	//			additional_tags String   DEFAULT ''
+	//		) ENGINE = MergeTree(created_date, (tags_id, created_at), 8192)
+	//		`,
+	//	tableName,
+	//	strings.Join(columnsWithType, ","))
+
+	var sql string
+	if clusterName == "" {
+		sql = fmt.Sprintf(`
 			CREATE TABLE %s (
 				created_date    Date     DEFAULT today(),
 				created_at      DateTime DEFAULT now(),
@@ -248,12 +314,41 @@ func createMetricsTable(db *sqlx.DB, tableSpec []string) {
 				additional_tags String   DEFAULT ''
 			) ENGINE = MergeTree(created_date, (tags_id, created_at), 8192)
 			`,
-		tableName,
-		strings.Join(columnsWithType, ","))
+			tableName,
+			strings.Join(columnsWithType, ","))
+	} else {
+		sql = fmt.Sprintf(`
+			CREATE TABLE %[1]s_mergeTree ON CLUSTER %[2]s(
+				created_date    Date     DEFAULT today(),
+				created_at      DateTime DEFAULT now(),
+				time            String,
+				tags_id         UInt32,
+				%[3]s,
+				additional_tags String   DEFAULT ''
+			) ENGINE = MergeTree(created_date, (tags_id, created_at), 8192); 
+			`,
+			tableName,
+			clusterName,
+			strings.Join(columnsWithType, ","))
+	}
 	if debug > 0 {
 		fmt.Printf(sql)
 	}
 	_, err := db.Exec(sql)
+	if err != nil {
+		panic(err)
+	}
+	if clusterName != "" {
+		sql = fmt.Sprintf(
+			"CREATE TABLE %[1]s as %[1]s_mergeTree ENGINE = Distributed(%[2]s, %[3]s,  %[1]s_mergeTree, rand());",
+			tableName,
+			clusterName,
+			loader.DatabaseName())
+	}
+	if debug > 0 {
+		fmt.Printf(sql)
+	}
+	_, err = db.Exec(sql)
 	if err != nil {
 		panic(err)
 	}
@@ -266,10 +361,10 @@ func getConnectString(db bool) string {
 	// ClickHouse ex.:
 	// tcp://host1:9000?username=user&password=qwerty&database=clicks&read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000
 	if db {
-		return fmt.Sprintf("tcp://%s:9000?username=%s&password=%s&database=%s", host, user, password, loader.DatabaseName())
+		return fmt.Sprintf("tcp://%s:19000?username=%s&password=%s&database=%s", host, user, password, loader.DatabaseName())
 	}
 
-	return fmt.Sprintf("tcp://%s:9000?username=%s&password=%s", host, user, password)
+	return fmt.Sprintf("tcp://%s:19000?username=%s&password=%s", host, user, password)
 }
 
 func extractTagNamesAndTypes(tags []string) ([]string, []string) {

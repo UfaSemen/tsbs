@@ -31,6 +31,8 @@ var (
 	hashWorkers bool
 
 	debug int
+
+	clusterName string
 )
 
 // String values of tags and fields to insert - string representation
@@ -58,6 +60,8 @@ func init() {
 	pflag.String("user", "default", "User to connect to ClickHouse as")
 	pflag.String("password", "", "Password to connect to ClickHouse")
 
+	pflag.String("cluster-name", "", "Name of a  cluster(empy value - no cluster)")
+
 	pflag.Bool("log-batches", false, "Whether to time individual batches.")
 
 	// TODO - This flag could potentially be done as a string/enum with other options besides no-hash, round-robin, etc
@@ -80,6 +84,8 @@ func init() {
 	host = viper.GetString("host")
 	user = viper.GetString("user")
 	password = viper.GetString("password")
+
+	clusterName = viper.GetString("cluster-name")
 
 	logBatches = viper.GetBool("log-batches")
 	hashWorkers = viper.GetBool("hash-workers")
