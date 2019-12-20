@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/timescale/tsbs/internal/utils"
@@ -23,6 +25,7 @@ var (
 	port      string
 	senNum    int
 	batchSize int
+	debugPort int
 )
 
 // Parse args:
@@ -33,6 +36,7 @@ func init() {
 	pflag.String("host", "localhost", "Hostname of Peregreen instance")
 	pflag.String("port", "47375", "Which port to connect to on the database host")
 	pflag.Uint("sensors", 100, "Number of sensors in dataset")
+	pflag.Uint("debug-port", 0, "Debug port for prometheus and pprof")
 
 	pflag.Parse()
 
@@ -50,6 +54,14 @@ func init() {
 	port = viper.GetString("port")
 	senNum = viper.GetInt("sensors")
 	batchSize = viper.GetInt("batch-size")
+	debugPort = viper.GetInt("debug-port")
+
+	if debugPort > 0 {
+		go func() {
+			http.Handle("/metrics", promhttp.Handler())
+			log.Println(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", debugPort), nil))
+		}()
+	}
 
 	loader = load.GetBenchmarkRunner(config)
 }
