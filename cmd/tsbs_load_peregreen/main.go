@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
@@ -23,7 +24,7 @@ var fatal = log.Fatalf
 var (
 	host      string
 	port      string
-	senNum    int
+	workNum   int
 	batchSize int
 	debugPort int
 )
@@ -35,7 +36,6 @@ func init() {
 
 	pflag.String("host", "localhost", "Hostname of Peregreen instance")
 	pflag.String("port", "47375", "Which port to connect to on the database host")
-	pflag.Uint("sensors", 100, "Number of sensors in dataset")
 	pflag.Uint("debug-port", 0, "Debug port for prometheus and pprof")
 
 	pflag.Parse()
@@ -52,7 +52,7 @@ func init() {
 
 	host = viper.GetString("host")
 	port = viper.GetString("port")
-	senNum = viper.GetInt("sensors")
+	workNum = viper.GetInt("workers")
 	batchSize = viper.GetInt("batch-size")
 	debugPort = viper.GetInt("debug-port")
 
@@ -70,10 +70,10 @@ type benchmark struct{}
 
 func (b *benchmark) GetPointDecoder(br *bufio.Reader) load.PointDecoder {
 	return &decoder{
-		scanner:   bufio.NewScanner(br),
-		senNum:    senNum,
+		scanner:   *bufio.NewScanner(br),
+		workNum:   workNum,
 		batchSize: batchSize,
-		readStrs:  make([]string, batchSize*senNum),
+		readStrs:  make([][]byte, batchSize*workNum),
 	}
 }
 

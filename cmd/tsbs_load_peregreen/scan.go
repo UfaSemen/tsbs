@@ -55,27 +55,27 @@ func (b *batch) Append(item *load.Point) {
 }
 
 type decoder struct {
-	scanner    *bufio.Scanner
-	senNum     int
+	scanner    bufio.Scanner
+	workNum    int
 	batchSize  int
-	sensor     int
+	worker     int
 	numInBatch int
 	n          int
 	end        int
-	readStrs   []string
+	readStrs   [][]byte
 }
 
 func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 	var p point
-	if d.sensor == 0 {
-		for i := 0; i < senNum; i++ {
+	if d.worker == 0 {
+		for i := 0; i < workNum; i++ {
 			ok := d.scanner.Scan()
 			if !ok && d.scanner.Err() == nil {
 				if d.numInBatch == 0 {
 					return nil
 				}
 				d.end = d.numInBatch
-				d.sensor = (d.sensor + 1) % d.senNum
+				d.worker = (d.worker + 1) % d.workNum
 				d.numInBatch = 0
 				d.n = 0
 				break
@@ -83,16 +83,17 @@ func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 				fatal("scan error: %v", d.scanner.Err())
 				return nil
 			}
-			d.readStrs[d.n] = d.scanner.Text()
+			d.readStrs[d.n] = make([]byte, len(d.scanner.Bytes()))
+			copy(d.readStrs[d.n], d.scanner.Bytes())
 			d.n++
 		}
 	}
-	p = d.parsePoint(d.readStrs[d.numInBatch*d.senNum+d.sensor])
+	p = d.parsePoint(string(d.readStrs[d.numInBatch*d.workNum+d.worker]))
 	d.numInBatch++
 	if d.numInBatch == d.batchSize || d.numInBatch == d.end {
-		d.sensor = (d.sensor + 1) % d.senNum
+		d.worker = (d.worker + 1) % d.workNum
 		d.numInBatch = 0
-		if d.sensor == 0 {
+		if d.worker == 0 {
 			d.n = 0
 		}
 	}
