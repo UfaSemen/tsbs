@@ -62,7 +62,7 @@ type decoder struct {
 	numInBatch int
 	n          int
 	end        int
-	readStrs   [][]byte
+	readStrs   []string
 }
 
 func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
@@ -83,12 +83,13 @@ func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 				fatal("scan error: %v", d.scanner.Err())
 				return nil
 			}
-			d.readStrs[d.n] = make([]byte, len(d.scanner.Bytes()))
-			copy(d.readStrs[d.n], d.scanner.Bytes())
+			//d.readStrs[d.n] = make([]string, len(d.scanner.Text()))
+			//copy(d.readStrs[d.n], d.scanner.Text())
+			d.readStrs[d.n] = d.scanner.Text()
 			d.n++
 		}
 	}
-	p = d.parsePoint(string(d.readStrs[d.numInBatch*d.workNum+d.worker]))
+	p = d.parsePoint((d.readStrs[d.numInBatch*d.workNum+d.worker]))
 	d.numInBatch++
 	if d.numInBatch == d.batchSize || d.numInBatch == d.end {
 		d.worker = (d.worker + 1) % d.workNum

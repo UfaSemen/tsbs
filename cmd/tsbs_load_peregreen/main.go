@@ -73,7 +73,7 @@ func (b *benchmark) GetPointDecoder(br *bufio.Reader) load.PointDecoder {
 		scanner:   *bufio.NewScanner(br),
 		workNum:   workNum,
 		batchSize: batchSize,
-		readStrs:  make([][]byte, batchSize*workNum),
+		readStrs:  make([]string, batchSize*workNum),
 	}
 }
 
