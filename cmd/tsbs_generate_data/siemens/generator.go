@@ -75,6 +75,7 @@ func (m *SensorMeasurement) getLine() string {
 		m.inFile.Seek(0, 0)
 		m.scanner = bufio.NewScanner(m.inFile)
 	}
+	m.scanner.Scan()
 	return m.scanner.Text()
 }
 

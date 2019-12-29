@@ -15,15 +15,16 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"github.com/timescale/tsbs/internal/utils"
 	"log"
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"time"
 
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"github.com/timescale/tsbs/internal/inputs"
-	"github.com/timescale/tsbs/internal/utils"
 )
 
 var (
@@ -62,6 +63,14 @@ func main() {
 		defer startMemoryProfile(profileFile)()
 	}
 
+	config.Use = "siemens"
+	config.Seed = 123
+	config.Scale = 100
+	config.TimeStart = "2016-01-01T00:00:00Z"
+	config.TimeEnd = "2016-02-01T00:00:00Z"
+	config.LogInterval = 1 * time.Second
+	config.Format = "peregreen"
+	config.InFilePath = "/home/alexvish/Downloads/alldata.csv"
 	err := dg.Generate(config)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)

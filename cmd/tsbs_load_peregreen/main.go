@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
+	"net/http"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -23,6 +25,7 @@ var (
 	port      string
 	senNum    int
 	batchSize int
+	debugPort int
 )
 
 // Parse args:
@@ -31,8 +34,9 @@ func init() {
 	config.AddToFlagSet(pflag.CommandLine)
 
 	pflag.String("host", "localhost", "Hostname of Peregreen instance")
-	pflag.String("port", "47375", "Which port to connect to on the database host")
+	pflag.String("port", "48967", "Which port to connect to on the database host")
 	pflag.Uint("sensors", 100, "Number of sensors in dataset")
+	pflag.Uint("debug-port", 0, "Debug port for prometheus and pprof")
 
 	pflag.Parse()
 
@@ -50,6 +54,18 @@ func init() {
 	port = viper.GetString("port")
 	senNum = viper.GetInt("sensors")
 	batchSize = viper.GetInt("batch-size")
+	debugPort = viper.GetInt("debug-port")
+
+	config.FileName = "/run/media/alexvish/Data/pgn-src/pgn-data.csv"
+	config.Workers = 10
+	config.BatchSize = 1000000
+
+	if debugPort > 0 {
+		go func() {
+			http.Handle("/metrics", promhttp.Handler())
+			log.Println(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", debugPort), nil))
+		}()
+	}
 
 	loader = load.GetBenchmarkRunner(config)
 }
@@ -61,7 +77,7 @@ func (b *benchmark) GetPointDecoder(br *bufio.Reader) load.PointDecoder {
 		scanner:   bufio.NewScanner(br),
 		senNum:    senNum,
 		batchSize: batchSize,
-		readStrs:  make([]string, batchSize*senNum),
+		//readStrs:  make([]string, batchSize*senNum),
 	}
 }
 

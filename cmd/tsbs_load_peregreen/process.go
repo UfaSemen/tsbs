@@ -1,11 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"github.com/timescale/tsbs/load"
-	"github.com/visheratin/tss/data"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 type processor struct{}
@@ -22,15 +21,17 @@ func (p *processor) ProcessBatch(b load.Batch, _ bool) (uint64, uint64) {
 	btch := b.(*batch)
 	var rowCnt int
 	var metricCnt int
-	for sensor, elements := range btch.m {
-		elsCommon := data.Elements{Type: float64ElType, F64: elements}
-		marshaledEls, _ := elsCommon.MarshalMsg(nil)
-		buf := bytes.NewBuffer(marshaledEls)
+	for sensor, data := range btch.m {
+		//elsCommon := data.Elements{Type: float64ElType, F64: elements}
+		//marshaledEls, _ := elsCommon.MarshalMsg(nil)
+		//buf := bytes.NewBuffer(marshaledEls)
 		// buf contains all elements from one batch for the same sensor
-		rowCnt += len(elements)
-		metricCnt += len(elements)
-		resp, err := http.Post(protocol+host+":"+port+"/upload/"+sensor+"/msgp/format/float64",
-			contentType, buf)
+		rowCnt += data.len
+		metricCnt += data.len
+		format := "2-1- "
+		format = url.PathEscape(format)
+		path := protocol + host + ":" + port + "/upload/" + sensor + "/csv/" + format + "/float64"
+		resp, err := http.Post(path, contentType, &data.buf)
 		if err != nil {
 			fatal(err.Error())
 		}
