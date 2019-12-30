@@ -31,6 +31,7 @@ func (p *processor) ProcessBatch(b load.Batch, _ bool) (uint64, uint64) {
 		format := "2-1- "
 		format = url.PathEscape(format)
 		path := protocol + host + ":" + port + "/upload/" + sensor + "/csv/" + format + "/float64"
+		//t := time.Now()
 		resp, err := http.Post(path, contentType, &data.buf)
 		if err != nil {
 			fatal(err.Error())
@@ -39,6 +40,7 @@ func (p *processor) ProcessBatch(b load.Batch, _ bool) (uint64, uint64) {
 			log.Println(resp.Status)
 			log.Fatal("resp.Status != 200!")
 		}
+		//fmt.Println("req: " + time.Since(t).String())
 	}
 
 	return uint64(metricCnt), uint64(rowCnt)

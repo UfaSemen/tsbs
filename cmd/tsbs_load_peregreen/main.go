@@ -56,9 +56,9 @@ func init() {
 	batchSize = viper.GetInt("batch-size")
 	debugPort = viper.GetInt("debug-port")
 
-	config.FileName = "/run/media/alexvish/Data/pgn-src/pgn-data.csv"
-	config.Workers = 10
-	config.BatchSize = 1000000
+	//config.FileName = "/run/media/alexvish/Data/pgn-src/pgn-data.csv"
+	//config.Workers = 10
+	//config.BatchSize = 1000000
 
 	if debugPort > 0 {
 		go func() {

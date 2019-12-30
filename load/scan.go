@@ -134,6 +134,7 @@ func scanWithIndexer(channels []*duplexChannel, batchSize uint, limit uint64, br
 	// so we don't go over a limit (olimit), in order to slow down the scanner so it doesn't starve the workers
 	ocnt := 0
 	olimit := numChannels * cap(channels[0].toWorker) * 3
+	//t := time.Now()
 	for {
 
 		// Check whether incoming items limit reached.
@@ -168,6 +169,8 @@ func scanWithIndexer(channels []*duplexChannel, batchSize uint, limit uint64, br
 		fillingBatches[idx].Append(item)
 
 		if fillingBatches[idx].Len() >= int(batchSize) {
+			//fmt.Println(time.Since(t).String())
+			//t = time.Now()
 			// Batch is full (contains at least batchSize items) - ready to be sent to worker,
 			// or moved to outstanding, in case no workers available atm.
 			unsentBatches[idx] = sendOrQueueBatch(channels[idx], &ocnt, fillingBatches[idx], unsentBatches[idx])

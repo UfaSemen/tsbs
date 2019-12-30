@@ -76,7 +76,7 @@ func (d *decoder) Decode(bf *bufio.Reader) *load.Point {
 	//var p point
 	data, err := bf.ReadBytes('\n')
 	if err != nil {
-		fatal("unable to read bytes", err)
+		return nil
 	}
 	sen := strconv.Itoa(d.n)
 	p := point{
